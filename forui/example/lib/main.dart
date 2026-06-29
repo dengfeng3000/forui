@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:forui/forui.dart';
 import 'package:forui_example/sandbox.dart';
+import 'package:forui_example/test_button.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
 
 void main() {
@@ -13,8 +14,8 @@ void main() {
 }
 
 List<Widget> _pages = [
-  const Text('Home'),
-  const Text('Categories'),
+  const TestButton(),
+  const Text('Categories2'),
   const Text('Search'),
   const Text('Settings'),
   const Sandbox(),
@@ -28,7 +29,7 @@ class Application extends StatefulWidget {
 }
 
 class _ApplicationState extends State<Application> with SingleTickerProviderStateMixin {
-  int index = 4;
+  int index = 0;
   Brightness brightness = .light;
   FPlatformVariant platform = (defaultTargetPlatform == .iOS || defaultTargetPlatform == .android) ? .iOS : .macOS;
 

@@ -1,4 +1,4 @@
-package io.duobase.forui.samples.samples
+package io.duobase.forui.example
 
 import io.flutter.embedding.android.FlutterActivity
 
