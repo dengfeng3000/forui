@@ -103,6 +103,7 @@ class FCheckbox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = this.style(context.theme.checkboxStyle);
+    final motionDisabled = context.accessibility.motion == .disabled;
     final formVariants = <FFormFieldVariant>{if (!enabled) .disabled, if (error != null) .error};
     final (layout, labelStyle) = leadingLabel
         ? (FLabelLayout.horizontalLeading, style.leadingLabelStyle)
@@ -112,6 +113,8 @@ class FCheckbox extends StatelessWidget {
       style: style.tappableStyle,
       semanticsLabel: semanticsLabel,
       selected: value,
+      semanticsButton: false,
+      semanticsChecked: value,
       onPress: enabled ? () => onChange?.call(!value) : null,
       autofocus: autofocus,
       focusNode: focusNode,
@@ -134,8 +137,8 @@ class FCheckbox extends StatelessWidget {
             focused: tappableVariants.contains(FTappableVariant.focused),
             style: style.focusedOutlineStyle,
             child: AnimatedSwitcher(
-              duration: style.motion.fadeInDuration,
-              reverseDuration: style.motion.fadeOutDuration,
+              duration: motionDisabled ? .zero : style.motion.fadeInDuration,
+              reverseDuration: motionDisabled ? .zero : style.motion.fadeOutDuration,
               switchInCurve: style.motion.fadeInCurve,
               switchOutCurve: style.motion.fadeOutCurve,
               // This transition builder is necessary because of https://github.com/flutter/flutter/issues/121336#issuecomment-1482620874
@@ -308,6 +311,8 @@ class FCheckboxStyle with Diagnosticable, _$FCheckboxStyleFunctions {
 }
 
 /// The motion-related properties for a [FCheckbox].
+///
+/// All motion is automatically disabled when [FAccessibility.motion] is [FAccessibilityMotion.disabled].
 class FCheckboxMotion with Diagnosticable, _$FCheckboxMotionFunctions {
   /// The duration of the fade in animation. Defaults to 100ms.
   @override

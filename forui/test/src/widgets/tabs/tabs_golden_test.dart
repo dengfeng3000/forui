@@ -35,19 +35,11 @@ void main() {
             children: [
               FTabEntry(
                 label: const Text('Account'),
-                child: FCard(
-                  title: const Text('Account'),
-                  subtitle: const Text('Make changes to your account here. Click save when you are done.'),
-                  child: Container(color: Colors.blue, height: 100),
-                ),
+                child: Container(color: Colors.blue, height: 100),
               ),
               FTabEntry(
                 label: const Text('Password'),
-                child: FCard(
-                  title: const Text('Password'),
-                  subtitle: const Text('Change your password here. After saving, you will be logged out.'),
-                  child: Container(color: Colors.red, height: 100),
-                ),
+                child: Container(color: Colors.red, height: 100),
               ),
             ],
           ),
@@ -55,6 +47,31 @@ void main() {
       );
 
       await expectLater(find.byType(TestScaffold), matchesGoldenFile('tabs/${theme.name}.png'));
+    });
+
+    testWidgets('tall label - ${theme.name}', (tester) async {
+      await tester.pumpWidget(
+        TestScaffold.app(
+          theme: theme.data,
+          child: FTabs(
+            children: [
+              FTabEntry(
+                label: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [Text('Account'), Text('& Security'), Text('& Settings')],
+                ),
+                child: Container(color: Colors.blue, height: 100),
+              ),
+              FTabEntry(
+                label: const Text('Password'),
+                child: Container(color: Colors.red, height: 100),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      await expectLater(find.byType(TestScaffold), matchesGoldenFile('tabs/${theme.name}-tall-label.png'));
     });
 
     testWidgets('scrollable - ${theme.name}', (tester) async {
@@ -79,19 +96,11 @@ void main() {
             children: [
               FTabEntry(
                 label: const Text('Account'),
-                child: FCard(
-                  title: const Text('Account'),
-                  subtitle: const Text('Make changes to your account here. Click save when you are done.'),
-                  child: Container(color: Colors.blue, height: 100),
-                ),
+                child: Container(color: Colors.blue, height: 100),
               ),
               FTabEntry(
                 label: const Text('Password'),
-                child: FCard(
-                  title: const Text('Password'),
-                  subtitle: const Text('Change your password here. After saving, you will be logged out.'),
-                  child: Container(color: Colors.red, height: 100),
-                ),
+                child: Container(color: Colors.red, height: 100),
               ),
             ],
           ),
@@ -117,17 +126,11 @@ void main() {
               children: [
                 FTabEntry(
                   label: const Text('Account'),
-                  child: FCard(
-                    title: const Text('Account'),
-                    subtitle: const Text('Make changes to your account here. Click save when you are done.'),
-                  ),
+                  child: Container(color: Colors.blue, height: 100),
                 ),
                 FTabEntry(
                   label: const Text('Password'),
-                  child: FCard(
-                    title: const Text('Password'),
-                    subtitle: const Text('Change your password here. After saving, you will be logged out.'),
-                  ),
+                  child: Container(color: Colors.red, height: 100),
                 ),
               ],
             ),
@@ -139,4 +142,53 @@ void main() {
       await tester.pumpAndSettle();
     });
   }
+
+  group('accessibility', () {
+    // With expanding content, the tapped tab's panel cross-slides into view under full motion (the yellow foo panel
+    // slides out as the blue bar panel slides in), and swaps instantly under reduced and disabled motion.
+    for (final (name, features) in [
+      ('full', const FakeAccessibilityFeatures()),
+      ('reduced', const FakeAccessibilityFeatures(reduceMotion: true)),
+      ('disabled', const FakeAccessibilityFeatures(disableAnimations: true)),
+    ]) {
+      testWidgets('$name motion', experimentalLeakTesting: LeakTesting.settings.withIgnoredAll(), (tester) async {
+        tester.platformDispatcher.accessibilityFeaturesTestValue = features;
+        addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+
+        final sheet = autoDispose(AnimationSheetBuilder(frameSize: const Size(300, 200)));
+
+        Widget build() => TestScaffold.app(
+          child: SizedBox(
+            width: 260,
+            height: 150,
+            child: FTabs(
+              expands: true,
+              children: const [
+                FTabEntry(
+                  label: Text('foo'),
+                  child: ColoredBox(
+                    color: Colors.yellow,
+                    child: Center(child: Text('foo panel')),
+                  ),
+                ),
+                FTabEntry(
+                  label: Text('bar'),
+                  child: ColoredBox(
+                    color: Colors.blue,
+                    child: Center(child: Text('bar panel')),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
+        await tester.pumpWidget(sheet.record(build(), recording: false));
+        await tester.tap(find.text('bar'));
+        await tester.pumpFrames(sheet.record(build()), const Duration(milliseconds: 400));
+
+        await expectLater(sheet.collate(5), matchesGoldenFile('tabs/motion-$name.png'));
+      });
+    }
+  });
 }

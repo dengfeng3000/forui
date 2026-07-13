@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'package:intl/intl.dart';
 import 'package:meta/meta.dart';
 
 import 'package:forui/forui.dart';
@@ -63,6 +64,7 @@ class FDeterminateProgress extends StatefulWidget {
 
 class _State extends State<FDeterminateProgress> with SingleTickerProviderStateMixin {
   FDeterminateProgressStyle? _style;
+  FAccessibilityMotion? _motion;
   late AnimationController _controller;
   double? _target;
 
@@ -86,9 +88,16 @@ class _State extends State<FDeterminateProgress> with SingleTickerProviderStateM
 
   void _setup() {
     final style = _style = widget.style(context.theme.determinateProgressStyle);
-    if (_target != widget.value) {
+    final motion = context.accessibility.motion;
+    if (_target != widget.value || _motion != motion) {
       _target = widget.value;
-      _controller.animateTo(widget.value, duration: style.motion.duration, curve: style.motion.curve);
+      _motion = motion;
+
+      if (_motion == .disabled) {
+        _controller.value = widget.value;
+      } else {
+        _controller.animateTo(widget.value, duration: style.motion.duration, curve: style.motion.curve);
+      }
     }
   }
 
@@ -99,23 +108,27 @@ class _State extends State<FDeterminateProgress> with SingleTickerProviderStateM
   }
 
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-    constraints: _style!.constraints,
-    child: Semantics(
-      label: widget.semanticsLabel ?? (FLocalizations.of(context) ?? FDefaultLocalizations()).progressSemanticsLabel,
-      child: DecoratedBox(
-        decoration: _style!.trackDecoration,
-        child: Align(
-          alignment: .centerStart,
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (_, child) => FractionallySizedBox(widthFactor: _controller.value, child: child!),
-            child: Container(decoration: _style!.fillDecoration),
+  Widget build(BuildContext context) {
+    final localizations = FLocalizations.of(context) ?? FDefaultLocalizations();
+    return ConstrainedBox(
+      constraints: _style!.constraints,
+      child: Semantics(
+        label: widget.semanticsLabel ?? localizations.progressSemanticsLabel,
+        value: NumberFormat.percentPattern(localizations.localeName).format(widget.value),
+        child: DecoratedBox(
+          decoration: _style!.trackDecoration,
+          child: Align(
+            alignment: .centerStart,
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (_, child) => FractionallySizedBox(widthFactor: _controller.value, child: child!),
+              child: Container(decoration: _style!.fillDecoration),
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// A [FDeterminateProgress]'s style.
@@ -159,6 +172,8 @@ class FDeterminateProgressStyle with Diagnosticable, _$FDeterminateProgressStyle
 }
 
 /// Motion-related properties for a [FDeterminateProgress].
+///
+/// All motion is automatically disabled when [FAccessibility.motion] is [FAccessibilityMotion.disabled].
 class FDeterminateProgressMotion with Diagnosticable, _$FDeterminateProgressMotionFunctions {
   /// The animation's duration. Defaults to 1s.
   @override

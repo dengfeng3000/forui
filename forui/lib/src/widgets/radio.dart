@@ -105,6 +105,7 @@ class FRadio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = this.style(context.theme.radioStyle);
+    final motionDisabled = context.accessibility.motion == .disabled;
     final formVariants = <FFormFieldVariant>{if (!enabled) .disabled, if (error != null) .error};
     final (layout, labelStyle) = leadingLabel
         ? (FLabelLayout.horizontalLeading, style.leadingLabelStyle)
@@ -114,6 +115,9 @@ class FRadio extends StatelessWidget {
       style: style.tappableStyle,
       semanticsLabel: semanticsLabel,
       selected: value,
+      semanticsButton: false,
+      semanticsChecked: value,
+      semanticsInMutuallyExclusiveGroup: true,
       onPress: enabled ? () => onChange?.call(!value) : null,
       autofocus: autofocus,
       focusNode: focusNode,
@@ -137,7 +141,7 @@ class FRadio extends StatelessWidget {
               alignment: .center,
               children: [
                 AnimatedContainer(
-                  duration: style.motion.transitionDuration,
+                  duration: motionDisabled ? .zero : style.motion.transitionDuration,
                   curve: style.motion.transitionCurve,
                   padding: style.padding,
                   decoration: BoxDecoration(
@@ -148,12 +152,12 @@ class FRadio extends StatelessWidget {
                   child: SizedBox.square(dimension: style.indicatorSize),
                 ),
                 AnimatedContainer(
-                  duration: style.motion.transitionDuration,
+                  duration: motionDisabled ? .zero : style.motion.transitionDuration,
                   curve: style.motion.transitionCurve,
                   decoration: BoxDecoration(color: style.indicatorColor.resolve(variants), shape: .circle),
                   child: AnimatedSize(
-                    duration: style.motion.selectDuration,
-                    reverseDuration: style.motion.unselectDuration,
+                    duration: motionDisabled ? .zero : style.motion.selectDuration,
+                    reverseDuration: motionDisabled ? .zero : style.motion.unselectDuration,
                     curve: style.motion.selectCurve,
                     child: value ? SizedBox.square(dimension: style.indicatorSize) : const SizedBox.shrink(),
                   ),
@@ -288,6 +292,8 @@ class FRadioStyle with Diagnosticable, _$FRadioStyleFunctions {
 }
 
 /// The motion-related properties for a [FRadio].
+///
+/// All motion is automatically disabled when [FAccessibility.motion] is [FAccessibilityMotion.disabled].
 class FRadioMotion with Diagnosticable, _$FRadioMotionFunctions {
   /// The duration of the transition between states. Defaults to 100ms.
   @override

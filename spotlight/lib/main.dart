@@ -4,7 +4,7 @@ import 'package:flutter/material.dart' hide Autocomplete, Badge, Dialog, TextFie
 import 'package:forui/forui.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
 
-import 'widgets/text_field.dart';
+import 'widgets/tabs.dart';
 
 void main() {
   if (kDebugMode) {
@@ -18,7 +18,7 @@ class Application extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = FThemes.zinc.light.desktop;
+    final theme = FTheme.neutral.light.desktop;
 
     return MaterialApp(
       title: 'Forui Widget Spotlight',
@@ -30,7 +30,7 @@ class Application extends StatelessWidget {
         data: theme,
         child: FToaster(child: FTooltipGroup(child: child!)),
       ),
-      home: const FScaffold(child: TextField()),
+      home: const FScaffold(child: Tabs()),
     );
   }
 }

@@ -59,6 +59,20 @@ class FTappable extends StatefulWidget {
   /// {@macro forui.foundation.doc_templates.semanticsLabel}
   final String? semanticsLabel;
 
+  /// Whether this tappable is announced as a button. Defaults to true.
+  final bool semanticsButton;
+
+  /// Whether this tappable is checked, for checkbox and radio-like controls. Null if it has no checked state.
+  ///
+  /// Suppresses the [selected] semantic flag when non-null.
+  final bool? semanticsChecked;
+
+  /// Whether this tappable is expanded, for disclosure controls. Null if it has no expanded state.
+  final bool? semanticsExpanded;
+
+  /// Whether this tappable belongs to a mutually exclusive group, such as a radio button. Null if not applicable.
+  final bool? semanticsInMutuallyExclusiveGroup;
+
   /// Whether to replace all child semantics with this node. Defaults to false.
   final bool excludeSemantics;
 
@@ -297,6 +311,10 @@ class FTappable extends StatefulWidget {
     FTappableStyleDelta style,
     FFocusedOutlineStyleDelta? focusedOutlineStyle,
     String? semanticsLabel,
+    bool semanticsButton,
+    bool? semanticsChecked,
+    bool? semanticsExpanded,
+    bool? semanticsInMutuallyExclusiveGroup,
     bool excludeSemantics,
     bool autofocus,
     FocusNode? focusNode,
@@ -344,6 +362,10 @@ class FTappable extends StatefulWidget {
     this.style = const .context(),
     this.focusedOutlineStyle,
     this.semanticsLabel,
+    this.semanticsButton = true,
+    this.semanticsChecked,
+    this.semanticsExpanded,
+    this.semanticsInMutuallyExclusiveGroup,
     this.excludeSemantics = false,
     this.autofocus = false,
     this.focusNode,
@@ -394,6 +416,10 @@ class FTappable extends StatefulWidget {
       ..add(DiagnosticsProperty('style', style))
       ..add(DiagnosticsProperty('focusedOutlineStyle', focusedOutlineStyle))
       ..add(StringProperty('semanticsLabel', semanticsLabel))
+      ..add(FlagProperty('semanticsButton', value: semanticsButton, ifFalse: 'not a button'))
+      ..add(DiagnosticsProperty('semanticsChecked', semanticsChecked))
+      ..add(DiagnosticsProperty('semanticsExpanded', semanticsExpanded))
+      ..add(DiagnosticsProperty('semanticsInMutuallyExclusiveGroup', semanticsInMutuallyExclusiveGroup))
       ..add(FlagProperty('excludeSemantics', value: excludeSemantics, ifTrue: 'excludeSemantics'))
       ..add(FlagProperty('autofocus', value: autofocus, ifTrue: 'autofocus'))
       ..add(DiagnosticsProperty('focusNode', focusNode))
@@ -470,6 +496,7 @@ class _FTappableState<T extends FTappable> extends State<T> {
   late FTappableStyle _style;
   late FocusNode _focus;
   late Set<FTappableVariant> _current;
+  late bool _highlight;
   FTappableVariant? _platform;
   int _monotonic = 0;
   int _buttons = 0;
@@ -491,6 +518,20 @@ class _FTappableState<T extends FTappable> extends State<T> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _style = widget.style(context.theme.tappableStyle);
+    _highlight = context.accessibility.focusHighlight;
+    if (_highlight) {
+      if (_focus.hasFocus) {
+        _current.add(FTappableVariant.focused);
+      }
+      if (_focus.hasPrimaryFocus) {
+        _current.add(FTappableVariant.primaryFocused);
+      }
+    } else {
+      _current
+        ..remove(FTappableVariant.focused)
+        ..remove(FTappableVariant.primaryFocused);
+    }
+
     // This cast is always fine since extension types are erased at runtime.
     if (context.platformVariant case final FTappableVariant platform when _platform != platform) {
       _current
@@ -604,8 +645,11 @@ class _FTappableState<T extends FTappable> extends State<T> {
           enabled: !widget._disabled,
           label: widget.semanticsLabel,
           container: true,
-          button: true,
-          selected: widget.selected,
+          button: widget.semanticsButton,
+          checked: widget.semanticsChecked,
+          expanded: widget.semanticsExpanded,
+          inMutuallyExclusiveGroup: widget.semanticsInMutuallyExclusiveGroup,
+          selected: widget.semanticsChecked == null ? widget.selected : null,
           excludeSemantics: widget.excludeSemantics,
           child: Focus(
             autofocus: widget.autofocus,
@@ -613,8 +657,10 @@ class _FTappableState<T extends FTappable> extends State<T> {
             canRequestFocus: !widget._disabled,
             onFocusChange: (focused) {
               setState(() {
-                _update(.focused, focused);
-                _update(.primaryFocused, _focus.hasPrimaryFocus);
+                if (_highlight) {
+                  _update(.focused, focused);
+                  _update(.primaryFocused, _focus.hasPrimaryFocus);
+                }
               });
               widget.onFocusChange?.call(focused);
             },
@@ -758,6 +804,10 @@ class AnimatedTappable extends FTappable {
     super.style,
     super.focusedOutlineStyle,
     super.semanticsLabel,
+    super.semanticsButton,
+    super.semanticsChecked,
+    super.semanticsExpanded,
+    super.semanticsInMutuallyExclusiveGroup,
     super.excludeSemantics,
     super.autofocus,
     super.focusNode,
@@ -830,7 +880,7 @@ class AnimatedTappableState extends _FTappableState<AnimatedTappable> with Singl
   }
 
   void _setupBounceAnimation() {
-    final motion = _style.motion;
+    final motion = context.accessibility.motion == .disabled ? FTappableMotion.none : _style.motion;
     if (_motion != motion) {
       _motion = motion;
       _bounceController

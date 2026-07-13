@@ -261,6 +261,9 @@ void main() {
         });
 
         testWidgets('focused on non-first bottom viewport - ${theme.name} - $divider', (tester) async {
+          FocusManager.instance.highlightStrategy = .alwaysTraditional;
+          addTearDown(() => FocusManager.instance.highlightStrategy = .automatic);
+
           final focusNode = autoDispose(FocusNode());
 
           await tester.pumpWidget(
@@ -384,6 +387,9 @@ void main() {
           });
 
           testWidgets('focused - ${theme.name} - $divider - $position', (tester) async {
+            FocusManager.instance.highlightStrategy = .alwaysTraditional;
+            addTearDown(() => FocusManager.instance.highlightStrategy = .automatic);
+
             await tester.pumpWidget(
               TestScaffold(
                 theme: theme.data,
@@ -488,7 +494,7 @@ void main() {
     testWidgets('desktop hovered', (tester) async {
       await tester.pumpWidget(
         TestScaffold(
-          theme: FThemes.neutral.light.desktop,
+          theme: FTheme.neutral.light.desktop,
           child: FItemGroup(
             divider: .indented,
             children: [
@@ -532,7 +538,7 @@ void main() {
                 onPress: () {},
               ),
               FItem(
-                style: FThemes.blue.dark.touch.itemGroupStyle.itemStyles.base,
+                style: TestScaffold.blueOverride.itemGroupStyle.itemStyles.base,
                 prefix: const Icon(FLucideIcons.bluetooth),
                 title: const Text('Bluetooth'),
                 subtitle: const Text('Fee, Fo'),

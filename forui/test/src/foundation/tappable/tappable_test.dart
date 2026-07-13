@@ -77,6 +77,9 @@ void main() {
 
   group('FTappable', () {
     testWidgets('focused when enabled', (tester) async {
+      FocusManager.instance.highlightStrategy = .alwaysTraditional;
+      addTearDown(() => FocusManager.instance.highlightStrategy = .automatic);
+
       await tester.pumpWidget(
         TestScaffold(
           child: FTappable(focusNode: focusNode, builder: (_, states, _) => Text('$states'), onPress: () {}),
@@ -262,6 +265,35 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    for (final (name, features, pressed) in [
+      ('reduced motion', const FakeAccessibilityFeatures(reduceMotion: true), 0.97),
+      ('disabled motion', const FakeAccessibilityFeatures(disableAnimations: true), 1.0),
+    ]) {
+      testWidgets('bounce gated by $name', (tester) async {
+        tester.platformDispatcher.accessibilityFeaturesTestValue = features;
+        addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+
+        final key = GlobalKey<AnimatedTappableState>();
+        await tester.pumpWidget(
+          TestScaffold(
+            child: FTappable(key: key, builder: (_, states, _) => Text('$states'), onPress: () {}),
+          ),
+        );
+        expect(key.currentState?.bounce.value, 1);
+
+        final gesture = await tester.press(find.byType(AnimatedTappable));
+        await tester.pumpAndSettle(const Duration(milliseconds: 200));
+
+        // The press bounce is small local feedback: reduced motion keeps it (0.97), only disabled removes it (1.0).
+        expect(find.text({...set(true), FTappableVariant.pressed}.toString()), findsOneWidget);
+        expect(key.currentState?.bounce.value, pressed);
+
+        await gesture.up();
+        await tester.pumpAndSettle();
+        expect(key.currentState?.bounce.value, 1);
+      });
+    }
+
     testWidgets('simulated race condition between animation and unmounting of widget', (tester) async {
       await tester.pumpWidget(TestScaffold(child: const _StubTappable()));
 
@@ -356,6 +388,9 @@ void main() {
 
   group('FTappable.static', () {
     testWidgets('focused when enabled', (tester) async {
+      FocusManager.instance.highlightStrategy = .alwaysTraditional;
+      addTearDown(() => FocusManager.instance.highlightStrategy = .automatic);
+
       await tester.pumpWidget(
         TestScaffold(
           child: FTappable.static(focusNode: focusNode, builder: (_, states, _) => Text('$states'), onPress: () {}),
@@ -827,6 +862,9 @@ void main() {
   });
 
   testWidgets('returns focused state on primary focus', (tester) async {
+    FocusManager.instance.highlightStrategy = .alwaysTraditional;
+    addTearDown(() => FocusManager.instance.highlightStrategy = .automatic);
+
     final focus = autoDispose(FocusNode());
 
     var focused = false;
@@ -836,7 +874,7 @@ void main() {
           focusNode: focus,
           onPress: focus.requestFocus,
           onVariantChange: (_, current) => focused = current.contains(FTappableVariant.focused),
-          focusedOutlineStyle: FThemes.neutral.light.touch.style.focusedOutlineStyle,
+          focusedOutlineStyle: FTheme.neutral.light.touch.style.focusedOutlineStyle,
           child: const Text('focus'),
         ),
       ),
@@ -850,6 +888,9 @@ void main() {
   });
 
   testWidgets('return focused state on non-primary focus', (tester) async {
+    FocusManager.instance.highlightStrategy = .alwaysTraditional;
+    addTearDown(() => FocusManager.instance.highlightStrategy = .automatic);
+
     final focus = autoDispose(FocusNode());
 
     var focused = false;
@@ -857,7 +898,7 @@ void main() {
       TestScaffold.app(
         child: FTappable(
           onVariantChange: (_, current) => focused = current.contains(FTappableVariant.focused),
-          focusedOutlineStyle: FThemes.neutral.light.touch.style.focusedOutlineStyle,
+          focusedOutlineStyle: FTheme.neutral.light.touch.style.focusedOutlineStyle,
           child: FButton(onPress: focus.requestFocus, focusNode: focus, child: const Text('focus')),
         ),
       ),
@@ -868,5 +909,75 @@ void main() {
 
     expect(focus.hasFocus, true);
     expect(focused, true);
+  });
+
+  group('accessibility', () {
+    testWidgets('is a button with no state flags by default', (tester) async {
+      await tester.pumpWidget(
+        TestScaffold.app(
+          child: FTappable.static(onPress: () {}, child: const Text('tappable')),
+        ),
+      );
+
+      expect(
+        tester.getSemantics(find.text('tappable')),
+        isSemantics(isButton: true, hasCheckedState: false, hasExpandedState: false),
+      );
+    });
+
+    testWidgets('forwards button, checked, expanded, and inMutuallyExclusiveGroup', (tester) async {
+      await tester.pumpWidget(
+        TestScaffold.app(
+          child: FTappable.static(
+            semanticsButton: false,
+            semanticsChecked: true,
+            semanticsExpanded: true,
+            semanticsInMutuallyExclusiveGroup: true,
+            onPress: () {},
+            child: const Text('tappable'),
+          ),
+        ),
+      );
+
+      expect(
+        tester.getSemantics(find.text('tappable')),
+        isSemantics(
+          isButton: false,
+          hasCheckedState: true,
+          isChecked: true,
+          hasExpandedState: true,
+          isExpanded: true,
+          isInMutuallyExclusiveGroup: true,
+        ),
+      );
+    });
+
+    testWidgets('suppresses selected flag when checked is set', (tester) async {
+      await tester.pumpWidget(
+        TestScaffold.app(
+          child: FTappable.static(
+            selected: true,
+            semanticsChecked: true,
+            onPress: () {},
+            child: const Text('tappable'),
+          ),
+        ),
+      );
+
+      expect(
+        tester.getSemantics(find.text('tappable')),
+        isSemantics(hasCheckedState: true, isChecked: true, hasSelectedState: false),
+      );
+    });
+
+    testWidgets('exposes selected flag without checked', (tester) async {
+      await tester.pumpWidget(
+        TestScaffold.app(
+          child: FTappable.static(selected: true, onPress: () {}, child: const Text('tappable')),
+        ),
+      );
+
+      expect(tester.getSemantics(find.text('tappable')), isSemantics(hasSelectedState: true, isSelected: true));
+    });
   });
 }

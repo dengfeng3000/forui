@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:forui/forui.dart';
+import 'package:forui_example/icon_comparison.dart';
 import 'package:forui_example/sandbox.dart';
 import 'package:forui_example/test_button.dart';
 import 'package:marionette_flutter/marionette_flutter.dart';
@@ -19,6 +20,7 @@ List<Widget> _pages = [
   const Text('Search'),
   const Text('Settings'),
   const Sandbox(),
+  const IconComparison(),
 ];
 
 class Application extends StatefulWidget {
@@ -35,7 +37,7 @@ class _ApplicationState extends State<Application> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final brightnessTheme = brightness == .light ? FThemes.zinc.light : FThemes.zinc.dark;
+    final brightnessTheme = brightness == .light ? FTheme.neutral.light : FTheme.neutral.dark;
     final theme = platform.desktop ? brightnessTheme.desktop : brightnessTheme.touch;
 
     return MaterialApp(
@@ -74,6 +76,7 @@ class _ApplicationState extends State<Application> with SingleTickerProviderStat
                 FBottomNavigationBarItem(icon: Icon(FLucideIcons.search), label: Text('Search')),
                 FBottomNavigationBarItem(icon: Icon(FLucideIcons.settings), label: Text('Settings')),
                 FBottomNavigationBarItem(icon: Icon(FLucideIcons.castle), label: Text('Sandbox')),
+                FBottomNavigationBarItem(icon: Icon(FLucideIcons.shapes), label: Text('Icons')),
               ],
             ),
             child: _pages[index],

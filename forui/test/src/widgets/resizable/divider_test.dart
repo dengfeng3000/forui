@@ -60,7 +60,7 @@ void main() {
   group('haptic feedback', () {
     Future<int> run({required WidgetTester tester, required Axis axis, required List<double> steps}) async {
       var feedback = 0;
-      final colors = FThemes.neutral.light.touch.colors;
+      final colors = FTheme.neutral.light.touch.colors;
 
       await tester.pumpWidget(
         TestScaffold.app(
@@ -108,11 +108,47 @@ void main() {
     }
 
     testWidgets('FHapticFeedback.none() leaves divider style with no-op haptic', (tester) async {
-      final colors = FThemes.neutral.light.touch.colors;
+      final colors = FTheme.neutral.light.touch.colors;
       final theme = FThemeData(colors: colors, touch: true, hapticFeedback: const FHapticFeedback.none());
 
       expect(theme.resizableStyles.horizontal.hapticFeedback, FHapticFeedback.noFeedback);
       expect(theme.resizableStyles.vertical.hapticFeedback, FHapticFeedback.noFeedback);
     });
+  });
+
+  testWidgets('focus outline uses the divider style focusedOutlineStyle', (tester) async {
+    const color = Color(0xFFABCDEF);
+    final custom = FResizableDividerStyle(
+      color: const Color(0xFF000000),
+      width: 2,
+      thumbStyle: style.thumbStyle,
+      focusedOutlineStyle: FFocusedOutlineStyle(color: color, width: 2, borderRadius: .circular(4)),
+      hapticFeedback: FHapticFeedback.noFeedback,
+    );
+
+    await tester.pumpWidget(
+      TestScaffold.app(
+        child: Stack(
+          children: [
+            HorizontalDivider(
+              controller: controller,
+              style: custom,
+              type: .divider,
+              left: 0,
+              right: 1,
+              crossAxisExtent: 50,
+              hitRegionExtent: 100,
+              cursor: .defer,
+              resizePercentage: 0.1,
+              semanticFormatterCallback: (l, r) => '',
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final outline = tester.widget<FFocusedOutline>(find.byType(FFocusedOutline));
+    const sentinel = FFocusedOutlineStyle(color: Color(0xFF111111), width: 9, borderRadius: .zero);
+    expect(outline.style(sentinel).color, color);
   });
 }

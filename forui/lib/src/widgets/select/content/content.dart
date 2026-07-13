@@ -231,7 +231,16 @@ class _ContentState<T> extends State<Content<T>> {
       );
     }
 
-    return content;
+    // Force the highlight on so items stay highlighted regardless of the global highlight mode. Focus is the
+    // active-descendant highlight rather than a keyboard-traversal affordance.
+    return FAccessibilityScope(
+      data: FAccessibility(
+        accessibleNavigation: context.accessibility.accessibleNavigation,
+        motion: context.accessibility.motion,
+        focusHighlight: true,
+      ),
+      child: content,
+    );
   }
 
   Future<void> _ensureVisible(BuildContext context) async {

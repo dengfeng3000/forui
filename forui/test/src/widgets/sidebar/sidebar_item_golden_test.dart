@@ -223,7 +223,7 @@ void main() {
       TestScaffold(
         child: FSidebarItem(
           key: const Key('item'),
-          style: FThemes.neutral.light.touch.sidebarStyle.groupStyle.itemStyle,
+          style: FTheme.neutral.light.touch.sidebarStyle.groupStyle.itemStyle,
           label: const Text('Item'),
           onPress: () {},
         ),
@@ -234,7 +234,7 @@ void main() {
       TestScaffold(
         child: FSidebarItem(
           key: const Key('item'),
-          style: FThemes.neutral.dark.touch.sidebarStyle.groupStyle.itemStyle,
+          style: FTheme.neutral.dark.touch.sidebarStyle.groupStyle.itemStyle,
           label: const Text('Item'),
           onPress: () {},
         ),
@@ -242,5 +242,37 @@ void main() {
     );
 
     await expectLater(find.byType(TestScaffold), matchesGoldenFile('sidebar/sidebar-item/style-change.png'));
+  });
+
+  group('accessibility', () {
+    // The reveal and chevron displace content, so they snap under reduced and disabled motion. The child's fade is
+    // in-place, so it keeps animating under reduced (child at full height, fading in) and only snaps under disabled.
+    for (final (name, features) in [
+      ('full', const FakeAccessibilityFeatures()),
+      ('reduced', const FakeAccessibilityFeatures(reduceMotion: true)),
+      ('disabled', const FakeAccessibilityFeatures(disableAnimations: true)),
+    ]) {
+      testWidgets('$name motion', (tester) async {
+        tester.platformDispatcher.accessibilityFeaturesTestValue = features;
+        addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+
+        final sheet = autoDispose(AnimationSheetBuilder(frameSize: const Size(260, 150)));
+
+        Widget build() => TestScaffold.app(
+          child: const FSidebarItem(
+            label: Text('Parent'),
+            children: [FSidebarItem(label: Text('Child'))],
+          ),
+        );
+
+        await tester.pumpWidget(sheet.record(build(), recording: false));
+        await tester.tap(find.text('Parent'));
+        await tester.pumpFrames(sheet.record(build()), const Duration(milliseconds: 300));
+
+        await expectLater(sheet.collate(5), matchesGoldenFile('sidebar/sidebar-item/motion-$name.png'));
+
+        await tester.pump(const Duration(seconds: 1)); // Drain the tappable's pending gesture timer.
+      });
+    }
   });
 }
