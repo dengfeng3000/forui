@@ -21,12 +21,7 @@ class Card extends StatelessWidget {
   final Widget subtitle;
   final Widget child;
 
-  const Card({
-    required this.title,
-    required this.subtitle,
-    required this.child,
-    super.key,
-  });
+  const Card({required this.title, required this.subtitle, required this.child, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -77,11 +72,7 @@ class TitleCard extends StatelessWidget {
   final Widget title;
   final Widget subtitle;
 
-  const TitleCard({
-    required this.title,
-    required this.subtitle,
-    super.key,
-  });
+  const TitleCard({required this.title, required this.subtitle, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -1799,6 +1790,7 @@ enum FLucideIconMapping {
   circleDot(FLucideIcons.circleDot),
   circleEllipsis(FLucideIcons.circleEllipsis),
   circleEqual(FLucideIcons.circleEqual),
+  circleEuroSign(FLucideIcons.circleEuroSign),
   circleFadingArrowUp(FLucideIcons.circleFadingArrowUp),
   circleFadingPlus(FLucideIcons.circleFadingPlus),
   circleGauge(FLucideIcons.circleGauge),
@@ -1945,8 +1937,14 @@ enum FLucideIconMapping {
   currency(FLucideIcons.currency),
   cylinder(FLucideIcons.cylinder),
   dam(FLucideIcons.dam),
+  databaseArrowDown(FLucideIcons.databaseArrowDown),
+  databaseArrowUp(FLucideIcons.databaseArrowUp),
   databaseBackup(FLucideIcons.databaseBackup),
+  databaseCheck(FLucideIcons.databaseCheck),
+  databaseMinus(FLucideIcons.databaseMinus),
+  databasePlus(FLucideIcons.databasePlus),
   databaseSearch(FLucideIcons.databaseSearch),
+  databaseX(FLucideIcons.databaseX),
   databaseZap(FLucideIcons.databaseZap),
   database(FLucideIcons.database),
   decimalsArrowLeft(FLucideIcons.decimalsArrowLeft),
@@ -2656,6 +2654,7 @@ enum FLucideIconMapping {
   panelsRightBottom(FLucideIcons.panelsRightBottom),
   panelsTopBottom(FLucideIcons.panelsTopBottom),
   panelsTopLeft(FLucideIcons.panelsTopLeft),
+  paperBag(FLucideIcons.paperBag),
   paperclip(FLucideIcons.paperclip),
   parasol(FLucideIcons.parasol),
   parentheses(FLucideIcons.parentheses),
@@ -2687,6 +2686,7 @@ enum FLucideIconMapping {
   percentSquare(FLucideIcons.percentSquare),
   percent(FLucideIcons.percent),
   personStanding(FLucideIcons.personStanding),
+  phi(FLucideIcons.phi),
   philippinePeso(FLucideIcons.philippinePeso),
   phoneCall(FLucideIcons.phoneCall),
   phoneForwarded(FLucideIcons.phoneForwarded),
